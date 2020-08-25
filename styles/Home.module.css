@@ -36,14 +36,7 @@
 }
 
 .title a {
-  color: #0070f3;
   text-decoration: none;
-}
-
-.title a:hover,
-.title a:focus,
-.title a:active {
-  text-decoration: underline;
 }
 
 .title {
@@ -79,6 +72,13 @@
 
   max-width: 800px;
   margin-top: 3rem;
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.grid:hover{
+  color: black;
 }
 
 .card {
@@ -96,7 +96,7 @@
 .card:hover,
 .card:focus,
 .card:active {
-  color: #0070f3;
+  color: #000000;
   border-color: #0070f3;
 }
 

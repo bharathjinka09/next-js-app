@@ -1,65 +1,135 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useState, useEffect } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import styles from "../styles/Home.module.css";
 
-export default function Home() {
+import { Button } from "react-bootstrap";
+
+const defaultEndpoint = "https://rickandmortyapi.com/api/character/";
+
+export async function getServerSideProps() {
+  const res = await fetch(defaultEndpoint);
+  const data = await res.json();
+
+  // console.log(data)
+
+  return {
+    props: {
+      data,
+    },
+  };
+}
+
+export default function Home({ data }) {
+  // renaming the results to defaultResults
+  const { info, results: defaultResults = [] } = data;
+
+  const [results, setResults] = useState(defaultResults);
+
+  const [page, setPage] = useState({
+    ...info,
+    currentPage: defaultEndpoint,
+  });
+
+  const { currentPage } = page;
+
+  useEffect(() => {
+    if (currentPage === defaultEndpoint) return;
+
+    async function request() {
+      const res = await fetch(currentPage);
+      const nextData = await res.json();
+
+      setPage({
+        currentPage,
+        ...nextData.info,
+      });
+
+      if (!nextData.info?.prev) {
+        setResults(nextData.results);
+        return;
+      }
+
+      setResults((prev) => {
+        return [...prev, ...nextData.results];
+      });
+    }
+
+    request();
+  }, [currentPage]);
+
+  function handleLoadMore() {
+    setPage((prev) => {
+      return {
+        ...prev,
+        currentPage: page?.next,
+      };
+    });
+  }
+
+  function handleOnSubmitSearch(e) {
+    e.preventDefault();
+
+    const { currentTarget = {} } = e;
+    const fields = Array.from(currentTarget?.elements);
+    const fieldQuery = fields.find((field) => field.name === "query");
+
+    const value = fieldQuery.value || "";
+    const endpoint = `https://rickandmortyapi.com/api/character/?name=${value}`;
+
+    setPage({
+      currentPage: endpoint,
+    });
+  }
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>Wubba Lubba Dub dub!</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <h1 className={styles.title}>Wubba Lubba Dub dub!</h1>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
+        <p className={styles.description}>Rick and Morty Wiki</p>
+
+        <form className="search" onSubmit={handleOnSubmitSearch}>
+          <input className='form-control mb-2' name="query" type="search" />
+
+          <button className='btn btn-primary' type='submit' variant="primary" style={{ cursor: "pointer" }}>
+            Search
+          </button>
+        </form>
+
+        <ul className={styles.grid}>
+          {results.map((result) => {
+            const { id, name, image } = result;
+
+            return (
+              <li key={id} className={styles.card}>
+                <Link href="/character/[id]" as={`/character/${id}`}>
+                  <a>
+                    <img src={image} alt={`${name} thumb`} />
+                    <h3>{name}</h3>
+                  </a>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <p>
+          <Button
+            variant="info"
+            style={{ cursor: "pointer" }}
+            onClick={handleLoadMore}
+          >
+            Load More
+          </Button>
         </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
       </main>
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+      <footer className={styles.footer}>Developed by Bharath</footer>
     </div>
-  )
+  );
 }
